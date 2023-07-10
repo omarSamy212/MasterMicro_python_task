@@ -46,16 +46,11 @@ class FunctionPlotter(QMainWindow):
             QMessageBox.warning(self, "Input Error", "Please enter a function.")
             return False
 
-        if not re.match(r"^[a-zA-Z0-9^+*/.\- ]+$", function_str):
-            QMessageBox.warning(self, "Input Error", "Invalid characters in the function.")
-            return False
-
         try:
             x = symbols('x')
-            expr = re.sub(r'([0-9])x', r'\1*x', function_str)  # Fix for missing exponent
-            expr = expr.replace('^', '**')
+            expr = function_str.replace('^', '**')
             lambdify(x, expr)
-        except SympifyError:
+        except (SympifyError, TypeError, ValueError, NameError, SyntaxError):
             QMessageBox.warning(self, "Input Error", "Invalid function syntax.")
             return False
 
@@ -84,9 +79,8 @@ class FunctionPlotter(QMainWindow):
 
         if self.validate_input(function_str, min_value, max_value):
             x = np.linspace(float(min_value), float(max_value), 1000, dtype=np.float64)
-            expr = re.sub(r'([0-9])x', r'\1*x', function_str)  # Fix for missing exponent
-            expr = expr.replace('^', '**')
-            func = lambdify(symbols('x'), expr, modules='numpy')
+            expr = function_str.replace('^', '**')
+            func = lambdify(symbols('x'), expr)
 
             try:
                 y = func(x)
@@ -95,7 +89,7 @@ class FunctionPlotter(QMainWindow):
                 plt.ylabel('f(x)')
                 plt.title('Function Plot')
                 plt.show()
-            except (ValueError, OverflowError) as e:
+            except Exception as e:
                 QMessageBox.warning(self, "Plotting Error", str(e))
 
 
